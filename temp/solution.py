@@ -1,5 +1,5 @@
-def solve():
-    n, m = map(int, input().split())
-    print(n + m)
+# Write your Python solution here...
 
-solve()
+def solve():
+    # Your code here
+    pass

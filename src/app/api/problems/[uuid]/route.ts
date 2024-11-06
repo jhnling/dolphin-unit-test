@@ -3,9 +3,9 @@ import { sql } from '@vercel/postgres';
 
 export async function GET(request: NextRequest) {
   try {
-    // Parse the UUID from the request URL
+    // Parse the UUID from the request URL and decode it
     const url = new URL(request.url);
-    const uuid = url.pathname.split('/').pop();
+    const uuid = decodeURIComponent(url.pathname.split('/').pop() || '');
 
     if (!uuid) {
       return NextResponse.json(
@@ -14,11 +14,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Type assertion for sql query result
     const result = (await sql`
       SELECT * FROM "Problem"
       WHERE uid = ${uuid}
-    `) as { rows: any[] };
+    `) as { rows: { uid: string; tests: any[] }[] };
 
     if (result.rows.length === 0) {
       return NextResponse.json(
@@ -27,9 +26,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const problem = result.rows[0];
     return NextResponse.json({
-      uid: result.rows[0].uid,
-      tests: result.rows[0].tests
+      uid: problem.uid,
+      tests: problem.tests,
+      sampleTest: {
+        input: problem.tests[0]?.input,
+        expectedOutput: problem.tests[0]?.output
+      }
     });
   } catch (error) {
     console.error('Database error:', error);
