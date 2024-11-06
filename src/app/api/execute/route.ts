@@ -5,11 +5,11 @@ import { spawn } from 'child_process';
 import path from 'path';
 
 async function runPythonCode(code: string, input: string): Promise<{ output: string; error: string | null }> {
-  const tempDir = path.join(process.cwd(), 'temp');
+  const tempDir = '/tmp'; // Use /tmp for writable temporary storage
   const filePath = path.join(tempDir, 'solution.py');
 
   try {
-    // Create temp directory
+    // Create temp directory (not strictly needed for /tmp, but safe for other environments)
     await mkdir(tempDir, { recursive: true });
     await writeFile(filePath, code);
 
