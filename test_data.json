@@ -1,0 +1,436 @@
+[
+  {
+    "prompt": "Code your answer in python3 code to solve the following coding challenge using stdin/stdout.\nStanley defines the beauty of an array a of length n, which contains non-negative integers, as follows: $$∑_{i = 1}^{n} \\left ⌊ (a_i)/(k) \\right ⌋, which means that we divide each element by k$$, round it down, and sum up the resulting values.\n\nStanley told Sam the integer k and asked him to find an array a of n non-negative integers, such that the beauty is equal to b and the sum of elements is equal to s. Help Sam — find any of the arrays satisfying the conditions above.\n\nInput\n\nEach test contains multiple test cases. The first line contains the number of test cases t (1 ≤ t ≤ 1000). Description of the test cases follows.\n\nThe first line of each test case contains integers n, k, b, s (1 ≤ n ≤ 10^5, 1 ≤ k ≤ 10^9, 0 ≤ b ≤ 10^9, 0 ≤ s ≤ 10^{18}).\n\nIt is guaranteed that the sum of n over all test cases does not exceed 10^5.\n\nOutput\n\nFor each test case print -1 if such array a does not exist. Otherwise print n non-negative integers a_1, a_2, …, a_n (0 ≤ a_i ≤ 10^{18}) — the answer.\n\nExample\n\nInput\n\n8\n1 6 3 100\n3 6 3 12\n3 6 3 19\n5 4 7 38\n5 4 7 80\n99978 1000000000 100000000 1000000000000000000\n1 1 0 0\n4 1000000000 1000000000 1000000000000000000\n\n\nOutput\n\n-1\n-1\n0 0 19\n0 3 3 3 29\n-1\n-1\n0\n0 0 0 1000000000000000000\n\nNote\n\nIn the first, the second, the fifth and the sixth test cases of the example it is possible to show that such array does not exist.\n\nIn the third testcase of the example a = [0, 0, 19]. The sum of elements in it is equal to 19, the beauty of it is equal to \\left ( \\left ⌊ 0/6 \\right ⌋ + \\left ⌊ 0/6 \\right ⌋ + \\left ⌊ 19/6 \\right ⌋ \\right ) = (0 + 0 + 3) = 3.\n\nIn the fourth testcase of the example a = [0, 3, 3, 3, 29]. The sum of elements in it is equal to 38, the beauty of it is equal to (0 + 0 + 0 + 0 + 7) = 7.",
+    "language": "python3",
+    "code": "def solve():\n    n, k, b, s = map(int, input().split())\n\n    if s < b * k or s > b * k + n * (k - 1):\n        print(-1)\n        return\n\n    a = [0] * n\n    s -= b * k\n    for i in range(n):\n        take = min(s, k - 1)\n        a[i] = take\n        s -= take\n\n    a[0] += b * k\n    print(*a)\n\n\nt = int(input())\nfor _ in range(t):\n    solve()\n",
+    "thought": "We are given n, k, b, and s. We need to find an array of n non-negative integers such that the sum of the floor of each element divided by k equals b, and the sum of the elements equals s.\n\nFirst, let's analyze the constraints on the possible values of b and s. The minimum value of the beauty b occurs when all elements are as small as possible, ideally zero.  In this case, each element contributes zero to the beauty, so the minimum value for b is 0. However, the minimum value of b given s can also be related to s. If we have s and want to minimize b, we set each element to be k-1 until the remainder is less than k-1. Then we use one element to hold the remainder.\nThe maximum possible value of b occurs when the sum s is distributed to maximize the beauty. This will be the floor of s/k.  If floor(s/k) is smaller than b, it is impossible to construct such an array. If b is smaller than the minimal possible beauty we computed above, we cannot achieve the given beauty. So we conclude that b must be between these two bounds.  If it’s not, print -1.\n\nNow, let's consider how to construct a valid array.  We know the sum of the floored elements must be exactly b. Since each element contributes floor(a_i / k) to the beauty, we need the sum of these contributions to be b. One way to ensure this is to have b elements contribute 1 to the beauty and the remaining elements contribute 0.  To contribute 1 to the beauty, an element a_i must be at least k. To contribute 0, it should be less than k.\n\nWe can try to create an array where n-1 elements have a value of k-1 and one element has the rest of the sum s.  This maximizes the sum s while minimizing the beauty contributed by those n-1 elements.  Let’s call it max_res. The last element will be what’s remaining of s.  However, this case might not give us the desired beauty b.\n\nLet’s consider the remaining sum s after we used n-1 elements to be less than k - 1. We know the minimum beauty we can get with the sum is s // k. Let's call it min_b.  Here consider min_res to be the n sized array we constructed in this way.\n\nIf b is between min_b and floor(s/k) we have the solution. Then we start building our result array.\nWe want to reach a total beauty of b.  We can achieve this by having b elements contribute 1 to the beauty and the rest contribute 0.  To get a contribution of 1, an element can take a value between k and 2k-1.  However, we want to minimize the total sum s. So we should aim for values close to k.\n\nA key observation is that we have a remainder of s - b*k.  This remainder must be distributed among the n elements such that each element gets a value less than k. We can start with an array where b elements are equal to k and the rest are 0. The sum is then b*k. We need a sum of s, so the difference s-b*k should be distributed between elements, maintaining that no element becomes greater or equal to k.  We can simply distribute s - b*k among the n elements, prioritizing the first ones until the remainder becomes 0.\n\nLet’s start with an array filled with elements k-1, for the first n-1 indices.  The last one we will compute such that the sum becomes s and the beauty becomes b.  After filling up the array with k-1 we compute our remaining sum. If the remaining sum is greater or equal to k then our remaining value will consist of the floor(remaining sum / k) and that amount will add to the beauty, so we have to reduce that accordingly.\nWe can decrease the values of the first n-1 elements to reduce the sum and reach b.\nThe algorithm will be as follows: we try to fill n-1 positions with k-1 until we get a remainder sum r less than k-1 + k*b.\nThen we add our remaining sum to the array and this concludes the construction.",
+    "tests": [
+      {
+        "input": "8\n1 6 3 100\n3 6 3 12\n3 6 3 19\n5 4 7 38\n5 4 7 80\n99978 1000000000 100000000 1000000000000000000\n1 1 0 0\n4 1000000000 1000000000 1000000000000000000",
+        "output": "-1\n-1\n0 0 19\n0 3 3 3 29\n-1\n-1\n0\n0 0 0 1000000000000000000"
+      },
+      {
+        "input": "10\n10000 26 1000000000 2844970624723\n10000 13 1000000000 6569187615422\n10000 875 1000000000 2277900742329\n10000 983 1000000000 7031687076965\n10000 711 1000000000 9546056823689\n10000 273 1000000000 8397247227674\n10000 186 1000000000 4231234769114\n10000 430 1000000000 7800293394200\n10000 415 1000000000 2569258976107\n10000 814 1000000000 8684399884936",
+        "output": "-1\n-1\n-1\n-1\n-1\n-1\n-1\n-1\n-1\n-1"
+      },
+      {
+        "input": "10\n10000 1 1000000000 6674931001459\n10000 6 1000000000 6882544064902\n10000 7 1000000000 7653980089248\n10000 3 1000000000 3460967529230\n10000 5 1000000000 9147128123793\n10000 6 1000000000 7811152157661\n10000 6 1000000000 2369318029856\n10000 3 1000000000 2546849172317\n10000 2 1000000000 9693740807372\n10000 4 1000000000 3211813199219",
+        "output": "-1\n-1\n-1\n-1\n-1\n-1\n-1\n-1\n-1\n-1"
+      },
+      {
+        "input": "2\n1 1 10 10\n20 1 1000000000 1",
+        "output": "10\n-1"
+      }
+    ],
+    "uid": "IU0q5qOj9m-UbKFb:1"
+  },
+  {
+    "prompt": "Solve with python3 & stdin/stdout.\nFor he knew every Who down in Whoville beneath, Was busy now, hanging a mistletoe wreath. \"And they're hanging their stockings!\" he snarled with a sneer, \"Tomorrow is Christmas! It's practically here!\"\n\nDr. Suess, How The Grinch Stole Christmas\n\nChristmas celebrations are coming to Whoville. Cindy Lou Who and her parents Lou Lou Who and Betty Lou Who decided to give sweets to all people in their street. They decided to give the residents of each house on the street, one kilogram of sweets. So they need as many kilos of sweets as there are homes on their street.\n\nThe street, where the Lou Who family lives can be represented as n consecutive sections of equal length. You can go from any section to a neighbouring one in one unit of time. Each of the sections is one of three types: an empty piece of land, a house or a shop. Cindy Lou and her family can buy sweets in a shop, but no more than one kilogram of sweets in one shop (the vendors care about the residents of Whoville not to overeat on sweets).\n\nAfter the Lou Who family leave their home, they will be on the first section of the road. To get to this section of the road, they also require one unit of time. We can assume that Cindy and her mom and dad can carry an unlimited number of kilograms of sweets. Every time they are on a house section, they can give a kilogram of sweets to the inhabitants of the house, or they can simply move to another section. If the family have already given sweets to the residents of a house, they can't do it again. Similarly, if they are on the shop section, they can either buy a kilo of sweets in it or skip this shop. If they've bought a kilo of sweets in a shop, the seller of the shop remembered them and the won't sell them a single candy if they come again. The time to buy and give sweets can be neglected. The Lou Whos do not want the people of any house to remain without food.\n\nThe Lou Whos want to spend no more than t time units of time to give out sweets, as they really want to have enough time to prepare for the Christmas celebration. In order to have time to give all the sweets, they may have to initially bring additional k kilos of sweets.\n\nCindy Lou wants to know the minimum number of k kilos of sweets they need to take with them, to have time to give sweets to the residents of each house in their street.\n\nYour task is to write a program that will determine the minimum possible value of k.\n\nInput\n\nThe first line of the input contains two space-separated integers n and t (2 ≤ n ≤ 5·10^5, 1 ≤ t ≤ 10^9). The second line of the input contains n characters, the i-th of them equals \"H\" (if the i-th segment contains a house), \"S\" (if the i-th segment contains a shop) or \".\" (if the i-th segment doesn't contain a house or a shop). \n\nIt is guaranteed that there is at least one segment with a house.\n\nOutput\n\nIf there isn't a single value of k that makes it possible to give sweets to everybody in at most t units of time, print in a single line \"-1\" (without the quotes). Otherwise, print on a single line the minimum possible value of k.\n\nExamples\n\nInput\n\n6 6\nHSHSHS\n\n\nOutput\n\n1\n\n\nInput\n\n14 100\n...HHHSSS...SH\n\n\nOutput\n\n0\n\n\nInput\n\n23 50\nHHSS.......SSHHHHHHHHHH\n\n\nOutput\n\n8\n\nNote\n\nIn the first example, there are as many stores, as houses. If the family do not take a single kilo of sweets from home, in order to treat the inhabitants of the first house, they will need to make at least one step back, and they have absolutely no time for it. If they take one kilogram of sweets, they won't need to go back.\n\nIn the second example, the number of shops is equal to the number of houses and plenty of time. Available at all stores passing out candy in one direction and give them when passing in the opposite direction.\n\nIn the third example, the shops on the street are fewer than houses. The Lou Whos have to take the missing number of kilograms of sweets with them from home.",
+    "language": "python3",
+    "code": "def solve():\n    n, t = map(int, input().split())\n    s = input()\n    houses = s.count('H')\n    shops = s.count('S')\n\n    def check(k):\n        time = 1\n        sweets = k\n        houses_needed = 0\n        last_house_time = 0\n        for i in range(n):\n            time += 1\n            if s[i] == 'S':\n                sweets += 1\n            elif s[i] == 'H':\n                houses_needed += 1\n                last_house_time = i + 2\n\n            if sweets >= houses_needed:\n                sweets -= houses_needed\n                houses_needed = 0\n        \n        if houses_needed>0:\n          if sweets<houses_needed:\n            return False\n          \n          time += last_house_time-1\n        \n        return time <= t\n\n    low = 0\n    high = 10**6\n\n    ans = -1\n    while low <= high:\n        mid = (low + high) // 2\n        if check(mid):\n            ans = mid\n            high = mid - 1\n        else:\n            low = mid + 1\n\n    print(ans)\n\nsolve()",
+    "thought": "The problem asks us to find the minimum initial sweets needed to visit all houses within a given time.  Let's analyze the constraints and try to come up with an approach.\n\nThe time limit is quite large, suggesting that we might need a binary search approach. The value we're searching for is the initial number of sweets 'k'. We can check if a given 'k' is sufficient to cover all houses within the time limit.  \n\nFirst, let's think about how to efficiently simulate the process for a given 'k'.  We can iterate through the street. We'll keep track of the current sweets we have, the number of houses we've visited, and the time elapsed.  \n\nAt each step:\nIf it's a shop, we increment our current sweets (as we potentially buy one).\nIf it's a house, we increment a counter for the number of houses we still need to give sweets to.\nAfter each house, we check if we can give sweets to all the houses encountered so far, since we can carry an unlimited number of sweets. If we have enough sweets (current sweets >= houses needed), we deduct the required sweets and reset the houses counter.\n\nNow, for the time calculation:\nEach move to the next section costs 1 unit of time. Giving or buying sweets takes negligible time. Since our goal is to minimize time, we should give sweets to houses as soon as we have enough. If we can't give sweets immediately, we will have to backtrack to the last house.\nIf we reach a state where all houses are visited, the time is the sum of the number of steps to the right. \nIf houses still remain when we finish the street, we need to calculate the time taken for backtracking. This is the tricky part, since we want both to deliver the bought sweets and grab sweets from the initial k pile.\nWe can simplify the backtracking calculation: We need to return to the last visited house and then either visit the remaining houses one by one from left to right or from right to left, whichever takes less time.\nIf there are remaining houses after visiting all sections and giving out all available sweets, the given k is insufficient.\n\nNow we can combine these ideas:\nWe'll binary search for 'k'. The lower bound is 0, and the upper bound can be a large value or max(0, number of houses - number of shops), since it represents the theoretical maximum sweets.  For each 'k' in the binary search, we simulate the process described above and check if we can visit all the houses within time 't'.\n\nIf the simulation succeeds, we reduce the upper bound of 'k', otherwise, we increase the lower bound. This binary search will find the minimum 'k' required, or determine if no such 'k' exists within our initial range which we chose large enough to include all possible k values. If after the binary search we have a k value smaller than our extremely large initial upper bound it is a valid result, otherwise no solution exists.",
+    "tests": [
+      {
+        "input": "2 2\nHS",
+        "output": "1"
+      },
+      {
+        "input": "162 210\nHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH............................................................SSSSSSSSSSSSSH",
+        "output": "88"
+      },
+      {
+        "input": "34 44\n.HHHSSS.........................HS",
+        "output": "1"
+      },
+      {
+        "input": "162 162\nHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH............................................................SSSSSSSSSSSSSH",
+        "output": "88"
+      },
+      {
+        "input": "4 7\nHHSS",
+        "output": "0"
+      },
+      {
+        "input": "6 11\nH..SSH",
+        "output": "0"
+      },
+      {
+        "input": "162 50\nHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH............................................................SSSSSSSSSSSSSS",
+        "output": "-1"
+      },
+      {
+        "input": "336 400\nHSSHHSSHHS..S..SS..H.S.H..SSH.H.H.H.S.H.S.S.H.S..SS..H.SS.H.SS.SS..SS.H...H.H.H.HSS..H...SS..SS.H..H.S.S....S.H.SS..HS..S.S.S.H.H.S..S.H.SS.SS..SS.SS.HS.SS.HSSSSHSSSSSS.H.SS..HHH.H.H.S..H.SS.S.H..SS.HS.SS.S.H.H.H..H.SS.HS.HHHSS.SS.S.SSS.S.S.SS.HS.H.S.SS.H.SS.H.S.SS.HS.SS..SS.H.S.H.SSH.HSSS.SS..SS.SS.HS.H.S.SS.SS..SS.HHHS.H.SS.SS.SS.SS",
+        "output": "0"
+      },
+      {
+        "input": "34 32\n.HHHSSS.........................HS",
+        "output": "-1"
+      },
+      {
+        "input": "162 210\nHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH............................................................SSSSSSSSSSSSSS",
+        "output": "87"
+      },
+      {
+        "input": "336 336\nHHHHHHHHHS..S..HH..H.S.H..HHH.H.H.H.S.H.S.S.H.S..SS..H.SS.H.HH.HH..HH.H...H.H.H.HSS..H...HH..HH.H..H.S.S....S.H.HH..HS..S.S.S.H.H.S..S.H.HH.HH..HH.HH.HS.HH.HSSHHHHHHHHH.H.HH..HHH.H.H.S..H.HH.S.H..HH.HS.HH.S.H.H.H..H.HH.HS.HHHHH.HH.S.SSS.S.S.HH.HS.H.S.HH.H.HH.H.S.HH.HS.HH..HH.H.S.H.HHH.HSHH.HH..HH.HH.HS.H.S.HH.HH..HH.HHHS.H.HH.HH.HH.HH",
+        "output": "106"
+      },
+      {
+        "input": "336 400\nHSHHHSHHHS..S..SH..H.S.H..SHH.H.H.H.S.H.S.S.H.S..SS..H.SS.H.SH.SH..SH.H...H.H.H.HSS..H...SH..SH.H..H.S.S....S.H.SH..HS..S.S.S.H.H.S..S.H.SH.SH..SH.SH.HS.SH.HSSSHHSHSHSH.H.SH..HHH.H.H.S..H.SH.S.H..SH.HS.SH.S.H.H.H..H.SH.HS.HHHSH.SH.S.SSS.S.S.SH.HS.H.S.SH.H.SH.H.S.SH.HS.SH..SH.H.S.H.SHH.HSSH.SH..SH.SH.HS.H.S.SH.SH..SH.HHHS.H.SH.SH.SH.SH",
+        "output": "18"
+      },
+      {
+        "input": "336 336\nHSHHHSHHHS..S..SH..H.S.H..SHH.H.H.H.S.H.S.S.H.S..SS..H.SS.H.SH.SH..SH.H...H.H.H.HSS..H...SH..SH.H..H.S.S....S.H.SH..HS..S.S.S.H.H.S..S.H.SH.SH..SH.SH.HS.SH.HSSSHHSHSHSH.H.SH..HHH.H.H.S..H.SH.S.H..SH.HS.SH.S.H.H.H..H.SH.HS.HHHSH.SH.S.SSS.S.S.SH.HS.H.S.SH.H.SH.H.S.SH.HS.SH..SH.H.S.H.SHH.HSSH.SH..SH.SH.HS.H.S.SH.SH..SH.HHHS.H.SH.SH.SH.SH",
+        "output": "18"
+      },
+      {
+        "input": "23 50\nHHSS.......SSHHHHHHHHHH",
+        "output": "8"
+      },
+      {
+        "input": "14 100\n...HHHSSS...SH",
+        "output": "0"
+      },
+      {
+        "input": "6 3\nSHSHHH",
+        "output": "-1"
+      },
+      {
+        "input": "2 3\nHS",
+        "output": "0"
+      },
+      {
+        "input": "8 8\nHH.SSSS.",
+        "output": "1"
+      },
+      {
+        "input": "162 209\nHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH............................................................SSSSSSSSSSSSSS",
+        "output": "88"
+      },
+      {
+        "input": "336 336\nHSHHHSHHHS..S..SH..H.S.H..SHH.H.H.H.S.H.S.S.H.S..SS..H.SS.H.SH.SH..SH.H...H.H.H.HSS..H...SH..SH.H..H.S.S....S.H.SH..HS..S.S.S.H.H.S..S.H.SH.SH..SH.SH.HS.SH.HSSSHHSHSHSH.H.SH..HHH.H.H.S..H.SH.S.H..SH.HS.SH.S.H.H.H..H.SH.HS.HHHSH.SH.S.SSS.S.S.SH.HS.H.S.SH.H.SH.H.S.SH.HS.SH..SH.H.S.H.SHH.HSSH.SH..SH.SH.HS.H.S.SH.SH..SH.HHHS.H.SH.SH.SH.S.",
+        "output": "18"
+      },
+      {
+        "input": "162 108\nHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH............................................................SSSSSSSSSSSSSS",
+        "output": "88"
+      },
+      {
+        "input": "162 300\nHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH............................................................SSSSSSSSSSSSSS",
+        "output": "74"
+      },
+      {
+        "input": "6 6\nHSHSHS",
+        "output": "1"
+      },
+      {
+        "input": "162 108\nHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH............................................................SSSSSSSSSSSSSH",
+        "output": "-1"
+      },
+      {
+        "input": "34 34\n.HHHSSS.........................HS",
+        "output": "3"
+      },
+      {
+        "input": "34 45\n.HHHSSS.........................HS",
+        "output": "0"
+      },
+      {
+        "input": "34 33\n.HHHSSS.........................HS",
+        "output": "3"
+      },
+      {
+        "input": "336 336\nHSSHHSSHHS..S..SS..H.S.H..SSH.H.H.H.S.H.S.S.H.S..SS..H.SS.H.SS.SS..SS.H...H.H.H.HSS..H...SS..SS.H..H.S.S....S.H.SS..HS..S.S.S.H.H.S..S.H.SS.SS..SS.SS.HS.SS.HSSSSHSSSSSS.H.SS..HHH.H.H.S..H.SS.S.H..SS.HS.SS.S.H.H.H..H.SS.HS.HHHSS.SS.S.SSS.S.S.SS.HS.H.S.SS.H.SS.H.S.SS.HS.SS..SS.H.S.H.SSH.HSSS.SS..SS.SS.HS.H.S.SS.SS..SS.HHHS.H.SS.SS.SS.SS",
+        "output": "0"
+      },
+      {
+        "input": "6 11\nH.S.SH",
+        "output": "0"
+      },
+      {
+        "input": "34 32\n.GHHSS.........S................HS",
+        "output": "-1"
+      },
+      {
+        "input": "64 0\nSS.SS.SS.SS.H.SHHH.SS..SS.SS.S.H/SH.SS.SS..SS.SSSH.HSS.H.S.H.SS..SS.SH.SS.S.H.SS.H.SS.S.H.SH.SS.S.S.SSS.S.SS.SSHHH.SH.SS.H..H.H.H.S.SS.SH.SS..H.S.SS.H..S.H.H.HHH..SR.H.SSSSSSHSSSSH.SS.SH.SS.SS..SS.SS.H.S..S.H.H.S.S.S..SH..SS.H.S....S.S.H..H.SS..SS...H..SSH.H.H.H...H.SS..SS.ST.H.SS.H..SS..S.H.S.S.H.S.H.H.H.HSS..H.S.H..SS..S..SHHSSHHSSH",
+        "output": "-1"
+      },
+      {
+        "input": "50 -1\nSS.SS.SR.SS.H.SHHH.SS..SS.SS.S.H/SH.SS.SS..SS.SSSH.HSS.H.S.H.SS..SS.SH.SS.S.H.SS.H.SS.S.H.SH.SS.S.S.SSS.S.SS.SSHHH.SH.SS.H..H.H.H.S.SS.SH.SS..H.S.SS.H..S.H.H.HHH..SR.H.SSSSSSHSSSSH.SS.SH.SS.SS..SS.SS.H.S..S.H.H.S.S.S..SH..SS.H.S....S.S.H..H.SS..SS...H..SSH.H.H.H...H.SS..SS.ST.H.SS.H..SS..S.H.S.S.H.S.H.H.H.HSS..H.S.H..SS..S..SHHSSHHSSH",
+        "output": "-1"
+      },
+      {
+        "input": "179 60\nHSHHHSHHHS..S..SH..H.S.H..SHHHH.H.H.S.H.S.S.H.S..SS..H.SS.H.SH.SH..SH.H...H.H.H.HSS..H...SI..SH.H..H.S.S....S.H.SH..HS..S.S.S.H.H.S..S.H.SH.SH..SH.SH.HS.S..HSSSHHSHSHSH.H.SH..HHH.H.H.S..H.SH.S.H..SHHHS.SH.S.H.H.H..H.SH.HS.HHHSH.SH.S.SSS.S.S.SH.HS.H.S.SH.H.S..H.S.SH.HS.SH..SH.H.S.H.SHH.HSSH.SH..SH.SH.HS.H.S.SH.SH..SH.HHHS.H.SH.SH.SH.S.",
+        "output": "-1"
+      },
+      {
+        "input": "336 707\nHSHHHSHHHS..S..SH..H.S.H..SHH.H.H.H.S.H.S.S.H.S..SS..H.SS.H.SH.SH..SH.H...H.H.H.HSS..H...SH..SH.H..H.S.S....S.H.SH..HS..S.S.S.H.H.S..S.H.SH.SH..SH.SH.HS.SH.HSSSHHSHSHSH.H.SH..HHH.H.H.S..H.SH.S.H..SH.HS.SH.S.H.H.H..H.SH.HS.HHHSH.SH.S.SSS.S.S.SH.HS.H.S.SH.H.SH.H.S.SH.HS.SH..SH.H.S.H.SHH.HSSH.SH..SH.SH.HS.H.S.SH.SH..SH.HHHS.H.SH.SH.SH.SH",
+        "output": "18"
+      },
+      {
+        "input": "271 150\nHSHHHSHHHS..S..SH..H.S.H..SHHHH.H.H.S.H.S.S.H.S..SS..H.SS.H.SH.SH..SH.H/..H.H.H.HSS..H...SI..SH.I..H.S.S....S.I.SH..HS..S.S.S.H.H.S..S.H.SH.SH..SH.SH.HS.S..HSSSHHSHSHSH-H.SH..HHH.H.H.S..H.SH.S.H..SHGHS.SH.S.H.H.H..H.SH.HS.HHHSH.SH.S.SSS.S.S.SH.HS.H.S.SH.H.S..H.S.SH.HS.SH..SH.H.S.H.SHH.HSSH.SH..SH.SH.HS.H.S.SG.SH..SH.HHHS.H.SH.SH.SH.S.",
+        "output": "-1"
+      },
+      {
+        "input": "276 1\nHSSSSSSSSSSSSS............................................................HHHHHHHHHHHHHHHHGHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH",
+        "output": "-1"
+      },
+      {
+        "input": "271 87\nHSHHHSHHHS..S..SH..H.S.H..SHHHH.H.H.S.H.S.S.H.S..SS..H.SS.H.SH.SH..SH.H/..H.H.H.HSS..H...SI..SH.I..H.S.S....S.H.SH..HS..S.S.S.H.H.S..S.H.SH.SH..SH.SH.HS.S..HSSSHHSHSHSH-H.SH..HHH.H.H.S..H.SH.S.H..SHGHS.SH.S.H.H.H..H.SH.HS.HHHSH.SH.S.SSS.S.S.SH.HS.H.S.SH.H.S..H.S.SH.HS.SH..SH.H.S.H.SHH.HSSH.SH..SH.SH.HS.H.S.SG.SH..SH.HHHS.H.SH.SH.SH.S.",
+        "output": "-1"
+      },
+      {
+        "input": "2 0\nHSSSHH",
+        "output": "-1"
+      },
+      {
+        "input": "75 0\nHHHHHHHHHHHHHHHIHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHIHHHHHHHHHHHGHHHHHHHHHHHHHHHH................................./...................-......SSSSSSSSSSSTSH",
+        "output": "-1"
+      },
+      {
+        "input": "179 43\n.S.HS.HS.HS.H.SHHH.HS..HS.GS.S.H.SH.HS.HS..HS.HSSH.HHS.H.S.HSHS..HS.SH.HS.S.H..S.H.HS.S.H.SH.HS.S.S.SSS.S.HS.HSHHH.SH.HS.H..H.H.H.S.HS.SHHHS..H.S.HS.H..S.H.H.HHH..HS.H-HSHSHSHHSSSH..S.SH.HS.HS..HS.HS.H.S....H.H.S.S.S..SH..HS.H.S....S.S.H..I.HS..IS...H..SSH.H.H.H../H.HS..HS.HS.H.SS.H..SS..S.H.S.S.H.S.H.H.HHHHS..H.S.H..HS..S..SHHHSHHHSH",
+        "output": "-1"
+      },
+      {
+        "input": "6 57\nH..SSH",
+        "output": "0"
+      },
+      {
+        "input": "57 -1\nSS.SS.SR.SS.H.SHHH.SS..SS.SS.S.H/SH.SS.SS..SS.SSSH.HSS.H.S.H.SS..SS.SH.SS.S.H.SS.H.SS.S.H.SH.SS.S.S.SSS.S.SS.SSHHH.SH.SS.H..H.H.H.S.SS.SH.SS..H.S.SS.H..S.H.H.HHH..SR.H.SSSSSSHSSSSH.SS.SH.SS.SS..SS.SS.H.S..S.H.H.S.S.S..SH..SS.H.S....S.S.H..H.SS..SS...H..SSH.H.H.H...H.SS..SS.ST.H.SS.H..SS..S.H.S.S.H.S.H.H.H.HSS..H.S.H..SS..S..SHHSSHHSSH",
+        "output": "-1"
+      },
+      {
+        "input": "254 60\n.S.HS.HS.HS.H.SHGH.HS..HS.HS.S.H.SH.HS.HS..HS.HSSH.HHS.H.S.H.HS..HS.SH.HS.S.H..S.H.HS.S.H.SH.HS.S.S.SSS.S.HS.HSHHH.SH.HS.H..H.H.H.S.HS.SHHHS..H.S.HS.H..S.H.H.HHH..HS.H.HSHSHSHHSSSH..S.SH.HS.HS..HS.HS.H.S..S.H.H.S.S.S..SH..HS.H.S....S.S.H..H.HS..IS...H..SSH.H.H.H...H.HS..HS.HS.H.SS.H..SS..S.H.S.S.H.S.H.H.HHHHS..H.S.H..HS..S..SHHHSHHHSH",
+        "output": "-1"
+      },
+      {
+        "input": "6 10\nH.S.SH",
+        "output": "0"
+      },
+      {
+        "input": "546 1\nHHHHHHHHHHHHHHHIHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHIHHHHHHHHHHHGHHHHHHHHHHHHHHHH................................-....................-......SSSSSSSSSSSTSH",
+        "output": "-1"
+      },
+      {
+        "input": "162 108\nHSSSSSSSSSSSSS............................................................HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH",
+        "output": "-1"
+      },
+      {
+        "input": "254 149\n.S.HS.HS.HS.H.SHHH.HS..HS.HS.S.H.SH.HS.HS..HS.HSSH.HHS.H.S.H.HS..HS.SH.HS.S.H.HS.H.HS.S.H.SH.HS.S.S.SSS.S.HS.HSHHH.SH.HS.H..H.H.H.S.HS.SHHHS..H.S.HS.H..S.H.H.HHH..HS.H.HSHSHSHHSSSH..S.SH.HS.HS..HS.HS.H.S..S.H.H.S.S.S..SH..HS.H.S....S.S.H..H.HS..IS...H..SSH.H.H.H...H.HS..HS.HS.H.SS.H..SS..S.H.S.S.H.S.H.H.H.HHS..H.S.H..HS..S..SHHHSHHHSH",
+        "output": "-1"
+      },
+      {
+        "input": "304 20\nHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH............................................................SSSSSSSSSSSSSS",
+        "output": "-1"
+      },
+      {
+        "input": "280 87\nHSHHHSHHHS..S..SH..H.S.H..SHHHH.H.H.S.H.S.S.H.S..SS..H.SS.H.SH.SH..SH.H/..H.H.H.HSS..H...SI..SH.I..H.S.S....S.I.SH..HS..S.S.S.H.H.S..S.H.SH.SH..SH.SH.HS.S..HSSSHHSHSHSH-H.SH..HHH.H.H.S..H.SH.S.H..SHGHS.SH.S.H.H.H..H.SH.HS.HHHSH.SH.S.SSS.S.S.SH.HS.HSS.SH.H.S..H.S.SH.HS..H..SH.H.S.H.SHH.HSSH.SH..SH.SH.HS.H.S.SG.SH..SH.HHHS.H.SH.SH.SH.S.",
+        "output": "-1"
+      },
+      {
+        "input": "152 1\nHSSSSSSSSSSSSS............................................./..............HHHHHHHHHHHHHHHHGHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH",
+        "output": "-1"
+      },
+      {
+        "input": "64 17\nSS.SS.SS.SS.H.SHHH.SS..SS.SS.S.H.SH.SS.SS..SS.SSSH.HSS.H.S.H.SS..SS.SH.SS.S.H.SS.H.SS.S.H.SH.SS.S.S.SSS.S.SS.SSHHH.SH.SS.H..H.H.H.S.SS.SH.SS..H.S.SS.H..S.H.H.HHH..SR.H.SSSSSSHSSSSH.SS.SH.SS.SS..SS.SS.H.S..S.H.H.S.S.S..SH..SS.H.S....S.S.H..H.SS..SS...H..SSH.H.H.H...H.SS..SS.SS.H.SS.H..SS..S.H.S.S.H.S.H.H.H.HSS..H.S.H..SS..S..SHHSSHHSSH",
+        "output": "-1"
+      },
+      {
+        "input": "347 2\nHSSSSSSSSSSSSS............................................................HHHHHHHHHHHHHHHHGHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH",
+        "output": "-1"
+      },
+      {
+        "input": "220 0\nHSSSSSSSSSSSSS............................................................HHHHHHHHHHHHHHHHGHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH",
+        "output": "-1"
+      },
+      {
+        "input": "336 400\nHSHHHSHHHS..S..SH..H.S.H..SHH...H.H.S.H.S.S.H.S..SS..H.SS.H.SH.SH..SH.H...H.H.H.HSS..H...SH..SH.H..H.S.S....S.H.SH..HS..S.S.S.H.H.S..S.H.SH.SH..SH.SH.HS.SH.HSSSHHSHSHSH.H.SH..HHH.H.H.S..H.SH.S.H..SH.HS.SH.S.H.H.H..H.SH.HS.HHHSH.SH.S.SSS.S.S.SH.HS.H.S.SH.H.SH.H.S.SH.HS.SH..SH.H.S.H.SHH.HSSH.SH..SH.SH.HS.H.S.SHHSH..SH.HHHS.H.SH.SH.SH.SH",
+        "output": "18"
+      },
+      {
+        "input": "336 149\nHSHHHSHHHS..S..SH..H.S.H..SHH.H.H.H.S.H.S.S.H.S..SS..H.SS.H.SH.SH..SH.H...H.H.H.HSS..H...SH..SH.H..H.S.S....S.H.SH..HS..S.S.S.H.H.S..S.H.SH.SH..SH.SH.HS.SH.HSSSHHSHSHSH.H.SH..HHH.H.H.S..H.SH.S.H..SH.HS.SH.S.H.H.H..H.SH.HS.HHHSH.SH.S.SSS.S.S.SH.HS.H.S.SH.H.SH.H.S.SH.HS.SH..SH.H.S.H.SHH.HSSH.SH..SH.SH.HS.H.S.SH.SH..SH.HHHS.H.SH.SH.SH.S.",
+        "output": "-1"
+      },
+      {
+        "input": "6 5\nHSHSHS",
+        "output": "1"
+      },
+      {
+        "input": "683 34\nHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH............................................/...............SSSSSSSSSSSSSS",
+        "output": "-1"
+      },
+      {
+        "input": "157 60\n.S.HS.HS.HS.H.SHHH.HS..HS.HS.S.H.SH.HS.HS..HS.HSSH.HHS.H.S.H.HS..HS.SH.HS.S.H..S.H.HS.S.H.SH.HS.S.S.SSS.S.HS.HSHHH.SH.HS.H..H.H.H.S.HS.SHHHS..H.S.HS.H..S.H.H.HHH..HS.H-HSHSHSHHSSSH..S.SH.HS.HS..HS.HS.H.S..S.H.H.S.S.S..SH..HS.H.S....S.S.H..H.HS..IS...H..SSH.H.H.H...H.HS..HS.HS.H.SS.H..SS..S.H.S.S.H.S.H.H.HHHHS..H.S.H..HS..S..SHHHSHHHSH",
+        "output": "-1"
+      },
+      {
+        "input": "271 87\nHSHHHSHHHS..S..SH..H.S.H..SHHHH.H.H.S.H.S.S.H.S..SS..H.SS.H.SH.SH..SH.H/..H.H.H.HSS..H...SI..SH.I..H.S.S....S.I.SH..HS..S.S.S.H.H.S..S.H.SH.SH..SH.SH.HS.S..HSSSHHSHSHSH-H.SH..HHH.H.H.S..H.SH.S.H..SHGHS.SH.S.H.H.H..H.SH.HS.HHHSH.SH.S.SSS.S.S.SH.HS.H.S.SH.H.S..H.S.SH.HS.SH..SH.H.S.H.SHH.HSSH.SH..SH.SH.HS.H.S.SG.SH..SH.HHHS.H.SH.SH.SH.S.",
+        "output": "-1"
+      },
+      {
+        "input": "683 3\nHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH.HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH...............................................H............SSSSSSSSSSSSSS",
+        "output": "-1"
+      },
+      {
+        "input": "205 336\nHSSHHSSHHS..S..SS..H.S.H..SSH.H.H.H.S.H.S.S.H.S..SS..H.SS.H.SS.SS..SS.H...H.H.H.HSS..H...SS..SS.H..H.S.S....S.H.SS..HS..S.S.S.H.H.S..S.H.SS.SS..SS.SS.HS.SS.HSSSSHSSSSSS.H.SS..HHH.H.H.S..H.SS.S.H..SS.HS.SS.S.H.H.H..H.SS.HS.HHHSS.SS.S.SSS.S.S.SS.HS.H.S.SS.H.SS.H.S.SS.HS.SS..SS.H.S.H.SSH.HSSS.SS..SS.SS.HS.H.S.SS.SS..SS.HHHS.H.SS.SS.SS.SS",
+        "output": "0"
+      },
+      {
+        "input": "162 101\nHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH............................................................SSSSSSSSSSSSSH",
+        "output": "-1"
+      },
+      {
+        "input": "159 70\nHSSHHSSHHS..S..SS..H.S.H..SSH.H.H.H.S.H.S.S.H.S..SS..H.SS.H.SS.SS..SS.H...H.H.H.HSS..H...SS..SS.H..H.S.S....S.H.SS..HS..S.S.S.H.H.S..S.H.SS.SS..SS.SS.HS.SS.HSSSSHSSSSSS.H.SS..HHH.H.H.S..H.SS.S.H..SS.HS.SS.S.H.H.H..H.SS.HS.HHHSS.SS.S.SSS.S.S.SS.HS.H.S.SS.H.SS.H.S.SS.HS.SS..SS.H.S.H.SSH.HSSS.SS..SS.SS.HS.H.S.SS.SS..SS.HHHS.H.SS.SS.SS.SS",
+        "output": "-1"
+      },
+      {
+        "input": "651 1\nHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHGHHHHHHHHHHHHHHHH.....................................................-......SSSSSSSSSSSTSH",
+        "output": "-1"
+      },
+      {
+        "input": "254 36\n.S.HS.HS.HS.H.SHHH.HS..HS.HS.S.H.SH.HS.HS..HS.HSSH.HHS.H.S.H.HS..HS.SH.HS.S.H.HS.H.HS.S.H.SH.HS.S.S.SSS.S.HS.HSHHH.SH.HS.H..H.H.H.S.HS.SH.HS..H.S.HS.H..S.H.H.HHH..HS.H.HSHSHSHHSSSH.HS.SH.HS.HS..HS.HS.H.S..S.H.H.S.S.S..SH..HS.H.S....S.S.H..H.HS..HS...H..SSH.H.H.H...H.HS..HS.HS.H.SS.H..SS..S.H.S.S.H.S.H.H.H.HHS..H.S.H..HS..S..SHHHSHHHSH",
+        "output": "-1"
+      },
+      {
+        "input": "271 75\nHSHHHSHHHS..S..SH..H.S.H..SHHHH.H.H.S.H.S.S.H.S..SS..H.SS.H.SH.SH..SH.H/..H.H.H.HSS..H...SI..SH.I..H.S.S....S.H.SH..HS..S.S.S.H.H.S..S.H.SH.SH..SH.SH.HS.S..HSSSHHSHSHSH-H.SH..HHH.H.H.S..H.SH.S.H..SHGHS.SH.S.H.H.H..H.SH.HS.HHHSH.SH.S.SSS.S.S.SH.HS.H.S.SH.H.S..H.S.SH.HS.SH..SH/H.S.H.SHH.HSSH.SH..SH.SH.HS.H.S.SG.SH..SH.HHHS.H.SH.SH.SH.S.",
+        "output": "-1"
+      },
+      {
+        "input": "651 4\nHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHGHHHHHHHHHHHHHHHH.....................................................-......SSSSSSSSSSSTSH",
+        "output": "-1"
+      },
+      {
+        "input": "189 5\nHSHHHSHHHS..S..SH..H.S.H..SHHHH.H.H.S.H.S.S.H.S..SS..H.SS.H.SH.SH..SH.H/..H.H.H.HSS..H...SI..SH.I..H.S.S....S.I.SH..HS..S.S.S.H.H.S..S.H.SH.SH..SH.SH.HS.S..HSSSHHSHSHSH-H.SH..HHH.H.H.S..H.SH.S.H..SHGHS.SH.S.H.H.H..H.SH.HS.HHHSH.SH.S.SSS.S.S.SH.HS.H.S.SH.H.S..H.S.SH.HS.SH..SH.H.S.H.SHH.HSSH.SH..SH.SH.HS.H.S.SG.SH..SH.HHHS.H.SH.SH.SH.S.",
+        "output": "-1"
+      },
+      {
+        "input": "34 21\n.HHH.SS...................S.....HS",
+        "output": "-1"
+      },
+      {
+        "input": "651 2\nHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHGHHHHHHHHHHHHHHHH.....................................................-......SSSSSSSSSSSTSH",
+        "output": "-1"
+      },
+      {
+        "input": "6 15\nH..SSH",
+        "output": "0"
+      },
+      {
+        "input": "254 204\n.S.HS.HS.HS.H.SHHH.HS..HS.HS.S.H.SH.HS.HS..HS.HSSH.HHS.H.S.H.HS..HS.SH.HS.S.H..S.H.HS.S.H.SH.HS.S.S.SSS.S.HS.HSHHH.SH.HS.H..H.H.H.S.HS.SHHHS..H.S.HS.H..S.H.H.HHH..HS.H.HSHSHSHHSSSH..S.SH.HS.HS..HS.HS.H.S..S.H.H.S.S.S..SH..HS.H.S....S.S.H..H.HS..IS...H..SSH.H.H.H...H.HS..HS.HS.H.SS.H..SS..S.H.S.S.H.S.H.H.HHHHS..H.S.H..HS..S..SHHHSHHHSH",
+        "output": "-1"
+      },
+      {
+        "input": "336 665\nHSHHHSHHHS..S..SH..H.S.H..SHH.H.H.H.S.H.S.S.H.S..SS..H.SS.H.SH.SH..SH.H...H.H.H.HSS..H...SH..SH.H..H.S.S....S.H.SH..HS..S.S.S.H.H.S..S.H.SH.SH..SH.SH.HS.SH.HSSSHHSHSHSH.H.SH..HHH.H.H.S..H.SH.S.H..SH.HS.SH.S.H.H.H..H.SH.HS.HHHSH.SH.S.SSS.S.S.SH.HS.H.S.SH.H.SH.H.S.SH.HS.SH..SH.H.S.H.SHH.HSSH.SH..SH.SH.HS.H.S.SH.SH..SH.HHHS.H.SH.SH.SH.SH",
+        "output": "18"
+      },
+      {
+        "input": "179 60\n.S.HS.HS.HS.H.SHHH.HS..HS.HS.S.H.SH.HS.HS..HS.HSSH.HHS.H.S.H.HS..HS.SH.HS.S.H..S.H.HS.S.H.SH.HS.S.S.SSS.S.HS.HSHHH.SH.HS.H..H.H.H.S.HS.SHHHS..H.S.HS.H..S.H.H.HHH..HS.H.HSHSHSHHSSSH..S.SH.HS.HS..HS.HS.H.S..S.H.H.S.S.S..SH..HS.H.S....S.S.H..H.HS..IS...H..SSH.H.H.H...H.HS..HS.HS.H.SS.H..SS..S.H.S.S.H.S.H.H.HHHHS..H.S.H..HS..S..SHHHSHHHSH",
+        "output": "-1"
+      },
+      {
+        "input": "271 9\n.S.HS.HS.HS.H.SHHH.HS..HS.GS.S.H.SH.HS.HS..HS.HSSH.HHS.H.S.H.HS..HS.SH.HS.S.H..S.H.HS.S.H.SH.HS.S.S.SSS.S.HS.HSHHH.SH.HS.H..H.H.H.S.HS.SHHHS..H.S.HS.H..S.H.H.HHH..HS.H-HSHSHSHHSSSH..S.SH.HS.HS..HS.HS.H.S..S.H.H.S.S.S..SH..HS.H.S....S.S.H..I.HS..IS...H..SSH.H.H.H../H.HS..HS.HS.H.SS.H..SS..S.H.S.S.H.S.H.H.HHHHS..H.S.H..HS..S..SHHHSHHHSH",
+        "output": "-1"
+      },
+      {
+        "input": "399 9\nHSHHHSHHHS..S..SH..H.S.H..SHHHH.H.H.S.H.S.S.H.S..SS..H.SS.H.SH.SH..SH.H/..H.H.H.HSS..H...SI..SH.I..H.S.S....S.I.SH..HS..S.S.S.H.H.S..S.H.SH.SH..SH.SH.HS.S..HSSSHHSHSHSH-H.SH..HHH.H.H.S..H.SH.S.H..SHGHS.SH.S.H.H.H..H.SH.HS.HHHSH.SH.S.SSS.S.S.SH.HS.HSS.SH.H.S..H.S.SH.HS..H..SH.H.S.H.SHH.HSSH.SH..SH.SH.HS.H.S.SG.SH..SH.HHHS.H.SH.SH.SH.S.",
+        "output": "-1"
+      },
+      {
+        "input": "526 1\nHSSSSSSSSSSSSS......-...........................H.........................HHHHHHHHHHHHHHHHGHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH.HHHHHHHHHHHHHHHHH",
+        "output": "-1"
+      },
+      {
+        "input": "34 11\nSH.........................SSSHHH.",
+        "output": "-1"
+      },
+      {
+        "input": "683 7\nHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH.HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH...............................................H............SSSSSSSSSSSSSS",
+        "output": "-1"
+      },
+      {
+        "input": "179 82\n.S.HS.HS.HS.H.SHHH.HS..HS.HS.S.H.SH.HS.HS..HS.HSSH.HHS.H.S.H.HS..HS.SH.HS.S.H..S.H.HS.S.H.SH.HS.S.S.SSS.S.HS.HSHHH.SH.HS.H..H.H.H.S.HS.SHHHS..H.S.HS.H..S.H.H.HHH..HS.H.HSHSHSHHSSSH..S.SH.HS.HS..HS.HS.H.S..S.H.H.S.S.S..SH..HS.H.S....S.S.H..H.HS..IS...H..SSH.H.H.H...H.HS..HS.HS.H.SS.H..SS..S.H.S.S.H.S.H.H.HHHHS..H.S.H..HS..S..SHHHSHHHSH",
+        "output": "-1"
+      },
+      {
+        "input": "271 40\n.S.HS.HS.HS.H.SHHH.HS..HS.GS.S.H.SH.HS.HS..HS.HSSH.HHS.H.S.H.HS..HS.SH.HS.S.H..S.H.HS.S.H.SH.HS.S.S.SSS.S.HS.HSHHH.SH.HS.H..H.H.H.S.HS.SHHHS..H.S.HS.H..S.H.H.HHH..HS.H-HSHSHSHHSSSH..S.SH.HS.HS..HS.HS.H.S..S.H.H.S.S.S..SH..HS.H.S....S.S.H..I.HS..IS...H..SSH.H.H.H../H.HS..HS.HS.H.SS.H..SS..S.H.S.S.H.S.H.H.HHHHS..H.S.H..HS..S..SHHHSHHHSH",
+        "output": "-1"
+      },
+      {
+        "input": "34 32\n.HHHSS.........S................HS",
+        "output": "-1"
+      },
+      {
+        "input": "683 51\nHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH............................................................SSSSSSSSSSSSSS",
+        "output": "-1"
+      },
+      {
+        "input": "887 2\nHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHGHHHHHHHHHHHHHHHH.....................................................-......SSSSSSSSSSSTSH",
+        "output": "-1"
+      },
+      {
+        "input": "162 12\nHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH............................................................SSSSSSSSSSSSSS",
+        "output": "-1"
+      },
+      {
+        "input": "34 11\n.HHHSSS.........................HS",
+        "output": "-1"
+      },
+      {
+        "input": "683 14\nHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH............................................................SSSSSSSSSSSSSS",
+        "output": "-1"
+      },
+      {
+        "input": "162 3\nHSSSSSSSSSSSSS............................................................HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH",
+        "output": "-1"
+      },
+      {
+        "input": "336 160\nHSHHHSHHHS..S..SH..H.S.H..SHH.H.H.H.S.H.S.S.H.S..SS..H.SS.H.SH.SH..SH.H...H.H.H.HSS..H...SH..SH.H..H.S.S....S.H.SH..HS..S.S.S.H.H.S..S.H.SH.SH..SH.SH.HS.SH.HSSSHHSHSHSH.H.SH..HHH.H.H.S..H.SH.S.H..SH.HS.SH.S.H.H.H..H.SH.HS.HHHSH.SH.S.SSS.S.S.SH.HS.H.S.SH.H.SH.H.S.SH.HS.SH..SH.H.S.H.SHH.HSSH.SH..SH.SH.HS.H.S.SH.SH..SH.HHHS.H.SH.SH.SH.S.",
+        "output": "-1"
+      },
+      {
+        "input": "10 1\nHSHSHS",
+        "output": "-1"
+      },
+      {
+        "input": "64 -1\nHSSHHSSHHS..S..SS..H.S.H..SSH.H.H.H.S.H.S.S.H.S..SS..H.SS.H.TS.SS..SS.H...H.H.H.HSS..H...SS..SS.H..H.S.S....S.H.SS..HS..S.S.S.H.H.S..S.H.SS.SS..SS.SS.HS.SS.HSSSSHSSSSSS.H.RS..HHH.H.H.S..H.SS.S.H..SS.HS.SS.S.H.H.H..H.SS.HS.HHHSS.SS.S.SSS.S.S.SS.HS.H.S.SS.H.SS.H.S.SS.HS.SS..SS.H.S.H.SSH.HSSS.SS..SS.SS.HS/H.S.SS.SS..SS.HHHS.H.SS.SS.SS.SS",
+        "output": "-1"
+      },
+      {
+        "input": "34 33\nSH.........................SSSHHH.",
+        "output": "0"
+      },
+      {
+        "input": "159 70\nSS.SS.SS.SS.H.SHHH.SS..SS.SS.S.H.SH.SS.SS..SS.SSSH.HSS.H.S.H.SS..SS.SH.SS.S.H.SS.H.SS.S.H.SH.SS.S.S.SSS.S.SS.SSHHH.SH.SS.H..H.H.H.S.SS.SH.SS..H.S.SS.H..S.H.H.HHH..SS.H.SSSSSSHSSSSH.SS.SH.SS.SS..SS.SS.H.S..S.H.H.S.S.S..SH..SS.H.S....S.S.H..H.SS..SS...H..SSH.H.H.H...H.SS..SS.SS.H.SS.H..SS..S.H.S.S.H.S.H.H.H.HSS..H.S.H..SS..S..SHHSSHHSSH",
+        "output": "-1"
+      },
+      {
+        "input": "271 43\n.S.HS.HS.HS.H.SHHH.HS..HS.GS.S.H.SH.HS.HS..HS.HSSH.HHS.H.S.H.HS..HS.SH.HS.S.H..S.H.HS.S.H.SH.HS.S.S.SSS.S.HS.HSHHH.SH.HS.H..H.H.H.S.HS.SHHHS..H.S.HS.H..S.H.H.HHH..HS.H-HSHSHSHHSSSH..S.SH.HS.HS..HS.HS.H.S..S.H.H.S.S.S..SH..HS.H.S....S.S.H..I.HS..IS...H..SSH.H.H.H../H.HS..HS.HS.H.SS.H..SS..S.H.S.S.H.S.H.H.HHHHS..H.S.H..HS..S..SHHHSHHHSH",
+        "output": "-1"
+      },
+      {
+        "input": "399 1\n.S.HS.HS.HS.H.SHHH.HS..HS.GS.S.H.SH.HS.HS..HS.HSSH.HHS.H.S.H.HS..H..SH.HS.S.H..S.H.HS.SSH.SH.HS.S.S.SSS.S.HS.HSHHH.SH.HS.H..H.H.H.S.HS.SHGHS..H.S.HS.H..S.H.H.HHH..HS.H-HSHSHSHHSSSH..S.SH.HS.HS..HS.HS.H.S..S.H.H.S.S.S..SH..HS.I.S....S.S.H..I.HS..IS...H..SSH.H.H.H../H.HS..HS.HS.H.SS.H..SS..S.H.S.S.H.S.H.H.HHHHS..H.S.G..HS..S..SHHHSHHHSH",
+        "output": "-1"
+      },
+      {
+        "input": "34 52\n.HHHSSS.........................HS",
+        "output": "0"
+      },
+      {
+        "input": "179 43\n.S.HS.HS.HS.H.SHHH.HS..HS.GS.S.H.SH.HS.HS..HS.HSSH.HHS.H.S.H.HS..HS.SH.HS.S.H..S.H.HS.S.H.SH.HS.S.S.SSS.S.HS.HSHHH.SH.HS.H..H.H.H.S.HS.SHHHS..H.S.HS.H..S.H.H.HHH..HS.H-HSHSHSHHSSSH..S.SH.HS.HS..HS.HS.H.S..S.H.H.S.S.S..SH..HS.H.S....S.S.H..I.HS..IS...H..SSH.H.H.H../H.HS..HS.HS.H.SS.H..SS..S.H.S.S.H.S.H.H.HHHHS..H.S.H..HS..S..SHHHSHHHSH",
+        "output": "-1"
+      },
+      {
+        "input": "703 2\nHHHHHHHHHHHHHHHIHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHGHHHHHHHHHHHHHHHH.....................................................-......SSSSSSSSSSSTSH",
+        "output": "-1"
+      },
+      {
+        "input": "6 3\nSHSIHH",
+        "output": "-1"
+      },
+      {
+        "input": "111 1\nHSHHHSHHHS..S..SH..G.S.H..SHHHH.H.H.S.H.S.S.H.S..SS..H.SS.H.SH.SH..SH.H/..H.H.H.HSS..H...SI..SH.I..H.S.T....S.I.SH..HS..S.S.S.H.H.S..S.H.SH.SH..SH.SH.HS.S..HSSSHHSHSHSH-H.SH..HHH.H.H.S..H.SH.S.H..SHGHS.SH.S.H.H.H..H.SH.HS.HHHSH.SH.S.SSS.S.S.SH.HS.HSS/SH.H.S..H.S.SH.HS..H..SH.H.S.H.SHH.HSSH.SH..SH.SH.HS.H.S.SG.SH..SH.HHHS.H.SH.SH.SH.S.",
+        "output": "-1"
+      }
+    ],
+    "uid": "IbhZiyoIZzo9bKh7:0"
+  }
+]

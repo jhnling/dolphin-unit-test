@@ -1,5 +1,5 @@
-import CodingChallenge from '@/components/CodingChallenge';
+import DolphinTestRunner from '@/components/DolphinTestRunner';
 
 export default function Home() {
-  return <CodingChallenge />;
+  return <DolphinTestRunner />;
 }
