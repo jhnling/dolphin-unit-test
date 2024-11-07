@@ -11,5 +11,10 @@
         "src": "/api/execute",
         "dest": "/api/execute.py"
       }
-    ]
+    ],
+    "build": {
+      "env": {
+        "PYTHON_VERSION": "3.9"
+      }
+    }
   }
