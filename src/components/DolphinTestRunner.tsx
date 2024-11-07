@@ -94,7 +94,7 @@ const DolphinTestRunner = () => {
     setLoading(true);
     setError(null);
     setSummary(null);
-
+  
     try {
       const response = await fetch('/api/execute', {
         method: 'POST',
@@ -109,11 +109,11 @@ const DolphinTestRunner = () => {
           }))
         })
       });
-
+  
       if (!response.ok) {
         throw new Error('Execution failed');
       }
-
+  
       const { results } = await response.json();
       
       // Update test cases with results
@@ -128,11 +128,11 @@ const DolphinTestRunner = () => {
         .filter((index: number) => index !== -1);
       
       setExpandedTests(prev => [...new Set([...prev, ...failedIndexes])]);
-
+  
       // Show summary
       const passCount = results.filter((r: TestCase) => r.passed).length;
       setSummary({ total: results.length, passed: passCount });
-
+  
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to execute code');
     } finally {
