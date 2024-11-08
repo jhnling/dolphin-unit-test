@@ -285,7 +285,7 @@ const DolphinTestRunner = () => {
             className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-md transition-colors duration-200 disabled:opacity-50"
             disabled={loading}
           >
-            {loading ? 'Running Tests...' : 'Submit Solution'}
+            {loading ? 'Running Tests...' : 'Test Solution'}
           </button>
 
           {testCases.length > 0 && (
@@ -350,8 +350,10 @@ const DolphinTestRunner = () => {
                               </div>
                               {test.error && (
                                 <div>
-                                  <div className="text-sm font-medium text-red-400 mb-1">Error</div>
-                                  <pre className="text-sm whitespace-pre-wrap bg-gray-900 p-2 rounded text-red-400">{test.error}</pre>
+                                  <div className="text-sm font-medium text-red-400 mb-1">Error Details</div>
+                                  <pre className="text-sm whitespace-pre-wrap bg-gray-900 p-2 rounded text-red-400 overflow-auto max-h-48 font-mono">
+                                    {test.error}
+                                  </pre>
                                 </div>
                               )}
                               {!test.passed && (
