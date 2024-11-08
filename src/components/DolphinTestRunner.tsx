@@ -55,6 +55,7 @@ const DolphinTestRunner = () => {
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const failureOptions = [
+    { value: 'execution_error', label: 'Execution Error' },
     { value: 'formatting', label: 'Formatting' },
     { value: 'floating_point', label: 'Floating Point' },
     { value: 'type_mismatch', label: 'Type Mismatch' },
