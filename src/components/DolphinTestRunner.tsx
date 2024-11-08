@@ -191,7 +191,7 @@ const DolphinTestRunner = () => {
     setLoading(true);
     setError(null);
     setCurrentTestIndex(0);
-
+  
     try {
       const newTestCases = [...testCases];
       
@@ -200,21 +200,22 @@ const DolphinTestRunner = () => {
         setCurrentTestIndex(i);
         const result = await runSingleTest(testCases[i], i);
         newTestCases[i] = {
-          ...testCases[i],
-          ...result,
+          ...testCases[i],  // Preserve original test case data
           output: result.output || '',
           passed: result.output === testCases[i].expectedOutput,
-          error: result.error
+          error: result.error,
+          // Make sure to keep expectedOutput
+          expectedOutput: testCases[i].expectedOutput
         };
         setTestCases(newTestCases);
       }
-
+  
       // Update summary after all tests complete
       const passCount = newTestCases.filter(test => test.passed).length;
       setSummary({ total: newTestCases.length, passed: passCount });
       setExpandedTests(newTestCases.map((_, index) => index));
       setShowTests(true);
-
+  
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to execute tests');
     } finally {
