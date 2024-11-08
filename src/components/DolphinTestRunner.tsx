@@ -152,12 +152,9 @@ const DolphinTestRunner = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setSummary(null);
-  
+  const [currentTestIndex, setCurrentTestIndex] = useState(-1);
+
+  const runSingleTest = async (testCase: any, index: number) => {
     try {
       const response = await fetch('/api/execute', {
         method: 'POST',
@@ -166,40 +163,63 @@ const DolphinTestRunner = () => {
         },
         body: JSON.stringify({
           code,
-          testCases: testCases.map(test => ({
-            input: test.input,
-            output: test.expectedOutput
-          }))
+          testCase,
+          testIndex: index
         })
       });
-  
+
       if (!response.ok) {
-        throw new Error('Execution failed');
+        throw new Error('Test execution failed');
       }
-  
-      const { results } = await response.json();
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error(`Test ${index} failed:`, error);
+      return {
+        input: testCase.input,
+        expectedOutput: testCase.output,
+        output: '',
+        passed: false,
+        error: error instanceof Error ? error.message : 'Test execution failed'
+      };
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setCurrentTestIndex(0);
+
+    try {
+      const newTestCases = [...testCases];
       
-      // Update test cases with results
-      setTestCases(results);
-      
-      // Show all test cases after execution
+      // Run tests sequentially
+      for (let i = 0; i < testCases.length; i++) {
+        setCurrentTestIndex(i);
+        const result = await runSingleTest(testCases[i], i);
+        newTestCases[i] = {
+          ...testCases[i],
+          ...result,
+          output: result.output || '',
+          passed: result.output === testCases[i].expectedOutput,
+          error: result.error
+        };
+        setTestCases(newTestCases);
+      }
+
+      // Update summary after all tests complete
+      const passCount = newTestCases.filter(test => test.passed).length;
+      setSummary({ total: newTestCases.length, passed: passCount });
+      setExpandedTests(newTestCases.map((_, index) => index));
       setShowTests(true);
-      
-      // Expand any failed test cases
-      const failedIndexes = results
-        .map((result: TestCase, index: number) => result.passed ? -1 : index)
-        .filter((index: number) => index !== -1);
-      
-      setExpandedTests(prev => [...new Set([...prev, ...failedIndexes])]);
-  
-      // Show summary
-      const passCount = results.filter((r: TestCase) => r.passed).length;
-      setSummary({ total: results.length, passed: passCount });
-  
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to execute code');
+      setError(err instanceof Error ? err.message : 'Failed to execute tests');
     } finally {
       setLoading(false);
+      setCurrentTestIndex(-1);
     }
   };
 
@@ -287,7 +307,12 @@ const DolphinTestRunner = () => {
           >
             {loading ? 'Running Tests...' : 'Test Solution'}
           </button>
-
+          {/* Progress Indicator */}
+          {currentTestIndex !== -1 && (
+            <div className="mt-2 text-sm text-blue-400">
+              Running test {currentTestIndex + 1} of {testCases.length}...
+            </div>
+          )}
           {testCases.length > 0 && (
             <div className="mt-8">
               <div className="flex items-center justify-between mb-4">

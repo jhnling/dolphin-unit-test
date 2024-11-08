@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { code, testCases } = await request.json();
+    const { code, testCase, testIndex } = await request.json();
 
     const response = await fetch(process.env.REPLIT_URL!, {
       method: 'POST',
@@ -12,27 +12,22 @@ export async function POST(request: Request) {
       },
       body: JSON.stringify({
         code,
-        testCases
+        testCase
       }),
-      // Add timeout configuration
-      signal: AbortSignal.timeout(30000) // 30 second timeout
+      signal: AbortSignal.timeout(10000) // 10 second timeout per test
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Execution failed: ${errorText}`);
+      throw new Error('Execution failed');
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json({ ...data, testIndex });
   } catch (error) {
     console.error('Execution error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Execution timed out. Please try again.' },
-      { status: error instanceof Error && error.name === 'TimeoutError' ? 504 : 500 }
+      { error: 'Execution failed or timed out', testIndex: -1 },
+      { status: 500 }
     );
   }
 }
-
-export const runtime = 'edge'; // Add edge runtime for better performance
-export const maxDuration = 60; // Maximum execution time in seconds
