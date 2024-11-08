@@ -1,3 +1,4 @@
+// src/app/api/execute/route.ts
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -12,11 +13,14 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         code,
         testCases
-      })
+      }),
+      // Add timeout configuration
+      signal: AbortSignal.timeout(30000) // 30 second timeout
     });
 
     if (!response.ok) {
-      throw new Error('Failed to execute code');
+      const errorText = await response.text();
+      throw new Error(`Execution failed: ${errorText}`);
     }
 
     const data = await response.json();
@@ -24,8 +28,11 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Execution error:', error);
     return NextResponse.json(
-      { error: 'Code execution failed' },
-      { status: 500 }
+      { error: error instanceof Error ? error.message : 'Execution timed out. Please try again.' },
+      { status: error instanceof Error && error.name === 'TimeoutError' ? 504 : 500 }
     );
   }
 }
+
+export const runtime = 'edge'; // Add edge runtime for better performance
+export const maxDuration = 60; // Maximum execution time in seconds
