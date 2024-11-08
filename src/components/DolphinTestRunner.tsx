@@ -204,6 +204,8 @@ const DolphinTestRunner = () => {
           output: result.output || '',
           passed: result.output === testCases[i].expectedOutput,
           error: result.error,
+          // Auto-select execution_error if there's an error
+          failureReason: result.error ? 'execution_error' : undefined,
           // Make sure to keep expectedOutput
           expectedOutput: testCases[i].expectedOutput
         };
@@ -317,19 +319,37 @@ const DolphinTestRunner = () => {
           {testCases.length > 0 && (
             <div className="mt-8">
               <div className="flex items-center justify-between mb-4">
-                <button
-                  type="button"
-                  onClick={() => setShowTests(!showTests)}
-                  className="flex items-center gap-2 text-lg font-medium text-white"
-                >
-                  <span className="transform transition-transform duration-200" style={{
-                    display: 'inline-block',
-                    transform: showTests ? 'rotate(90deg)' : 'none'
-                  }}>
-                    ▶
-                  </span>
-                  Unit Tests ({testCases.length})
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowTests(!showTests)}
+                    className="flex items-center gap-2 text-lg font-medium text-white"
+                  >
+                    <span className="transform transition-transform duration-200" style={{
+                      display: 'inline-block',
+                      transform: showTests ? 'rotate(90deg)' : 'none'
+                    }}>
+                      ▶
+                    </span>
+                    Unit Tests ({testCases.length})
+                  </button>
+                </div>
+                {showTests && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setExpandedTests([])}
+                      className="text-sm text-blue-400 hover:text-blue-300"
+                    >
+                      Collapse All
+                    </button>
+                    <button
+                      onClick={() => setExpandedTests(testCases.map((_, i) => i))}
+                      className="text-sm text-blue-400 hover:text-blue-300"
+                    >
+                      Expand All
+                    </button>
+                  </div>
+                )}
               </div>
               
               {showTests && (
@@ -347,7 +367,14 @@ const DolphinTestRunner = () => {
                               test.passed ? (
                                 <span className="text-green-500">✓</span>
                               ) : (
-                                <span className="text-red-500">✗</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-red-500">✗</span>
+                                  {test.error && (
+                                    <span className="text-xs text-red-400 truncate max-w-[300px]">
+                                      {test.error.split('\n')[0]}
+                                    </span>
+                                  )}
+                                </div>
                               )
                             )}
                           </div>
@@ -377,9 +404,7 @@ const DolphinTestRunner = () => {
                               {test.error && (
                                 <div>
                                   <div className="text-sm font-medium text-red-400 mb-1">Error Details</div>
-                                  <pre className="text-sm whitespace-pre-wrap bg-gray-900 p-2 rounded text-red-400 overflow-auto max-h-48 font-mono">
-                                    {test.error}
-                                  </pre>
+                                  <pre className="text-sm whitespace-pre-wrap bg-gray-900 p-2 rounded text-red-400">{test.error}</pre>
                                 </div>
                               )}
                               {!test.passed && (
